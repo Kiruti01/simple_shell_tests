@@ -1,11 +1,11 @@
 # Simple shell tests
 
-## 1.Unix command displays prompt
+## * [Task 1.Unix command displays prompt](./task_1)
 
-## 2.Handles arguments
+## * [Task 2.Handles arguments](./task_2)
 
-## 3. Handles PATH, fork must not be called if command doesnt exist
+## * [Task 3. Handles PATH, fork must not be called if command doesnt exist](./task_3)
 
-## 4. Exists
+## * Task 4. Exists
 
-## 5. Prints environment
+## * Task 5. Prints environment
