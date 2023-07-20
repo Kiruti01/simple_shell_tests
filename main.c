@@ -14,37 +14,6 @@
 
 int main(void)
 {
-	/* store buffer*/
-	char *buff = NULL;
-	size_t buff_size = 0;
-	ssize_t characters;
-
-	while (1)
-	{
-		write(STDOUT_FILENO, "$ ", 2);
-
-		characters = getline(&buff, &buff_size, stdin);
-
-		if (characters == -1)
-		{
-			break;
-		}
-
-		/* Remove the trailing newline, if present */
-		if (characters > 0 && buff[characters - 1] == '\n')
-		{
-			buff[characters - 1] = '\0';
-		}
-
-		if (strlen(buff) == 0)
-		{
-			continue;
-		}
-
-		execute_command(buff);
-	}
-	/* Free mem */
-	free(buff);
-
+	run_shell();
 	return (0);
 }

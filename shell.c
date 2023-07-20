@@ -6,6 +6,9 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
+/* finds command inputed*/
+char *find_command(char *command);
+
 /**
  * Execute user commands in child process using execve
  * prints error message if cmd not found
@@ -15,36 +18,88 @@
 
 void execute_command(char *command)
 {
-	pid_t pid = fork();
+	char *cmd_path;
+	char *token = strtok(command, " ");
 
-	if (pid == 0)
+	if (token == NULL)
 	{
-		/* Split the command into tokens for execve */
-		char *args[MAX_COMMAND_LENGTH];
-		int i = 0;
-		char *token = strtok(command, " ");
-
-		while (token != NULL && i < MAX_COMMAND_LENGTH - 1)
-		{
-			args[i] = token;
-			token = strtok(NULL, " ");
-			i++;
-		}
-		args[i] = NULL;
-
-		char *envp[] = {NULL}; /* Environment variables (empty for this example)*/
-
-		execve(args[0], args, envp);
-		perror("Error: Command not found");
-		_exit(1);
+		/*empty cmnd do nothing*/
+		return;
 	}
-	else if (pid < 0)
+
+	/*exit code*/
+	if (strcmp(token, "exit") == 0)
 	{
-		perror("Error: Fork failed");
-		exit(1);
+		char exit_msg[] = "logging out..\n";
+		write(STDOUT_FILENO, exit_msg, sizeof(exit_msg) -1);
+		exit(0);
+	}
+
+	/*find command path*/
+	cmd_path = find_command(token);
+
+	if (cmd_path != NULL)
+	{
+		pid_t pid = fork();
+
+		if (pid == 0)
+		{
+			/* Split the command into tokens for execve */
+			char *envp[] = {NULL};
+			/* Environment variables (empty for this example)*/
+
+			execve(cmd_path, &command, envp);
+			perror("Error: Command execution failed");
+			free(cmd_path);
+			_exit(1);
+		}
+		else if (pid < 0)
+		{
+			perror("Error: Fork failed");
+			exit(1);
+		}
+		else
+		{
+			waitpid(pid, NULL, 0);
+		}
+
+		free(cmd_path);
 	}
 	else
 	{
-		waitpid(pid, NULL, 0);
+		perror("Error: command not found in PATH\n");
 	}
+}
+
+void run_shell()
+{
+	char *buff = NULL;
+	size_t buff_size = 0;
+	ssize_t characters;
+
+	while (1)
+	{
+		write(STDOUT_FILENO, "$ ", 2);
+
+		characters = getline(&buff, &buff_size, stdin);
+
+		if (characters == -1)
+		{
+			break;
+		}
+
+		if (strlen(buff) > 0 && buff[characters -1] == '\n')
+		{
+			buff[characters - 1] = '\0';
+		}
+
+		if (strlen(buff) == 0)
+		{
+			continue;
+		}
+
+		execute_command(buff);
+	}
+
+	free(buff);
 }
