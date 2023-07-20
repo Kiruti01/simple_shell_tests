@@ -18,70 +18,49 @@ char *find_command(char *command);
 
 void execute_command(char *command)
 {
-	char *cmd_path;
-	char *token = strtok(command, " ");
+	pid_t pid = fork();
 
-	if (token == NULL)
+	if (pid == 0)
 	{
-		/*empty cmnd do nothing*/
-		return;
-	}
-
-	/*exit code*/
-	if (strcmp(token, "exit") == 0)
-	{
-		char exit_msg[] = "logging out..\n";
-		write(STDOUT_FILENO, exit_msg, sizeof(exit_msg) -1);
-		exit(0);
-	}
-	else if (strcmp(token, "env") == 0)
-	{
-		/*print current environment*/
-		extern char **environ;
+		/* Split the command into tokens for execve */
+		char *args[MAX_COMMAND_LENGTH];
 		int i = 0;
-		while (environ[i] != NULL)
+		char *token = strtok(command, " ");
+
+		while (token != NULL && i < MAX_COMMAND_LENGTH - 1)
 		{
-			write(STDOUT_FILENO, environ[i], strlen(environ[i]));
-			write(STDOUT_FILENO, "\n", 1);
+			args[i] = token;
+			token = strtok(NULL, " ");
 			i++;
 		}
-	}
-	else
-	{
-		/*find command path*/
-		cmd_path = find_command(token);
+		args[i] = NULL;
+
+		char *envp[] = {NULL};/* Environment variables (empty for this example)*/
+
+		char *cmd_path = find_command(args[0]);
 
 		if (cmd_path != NULL)
 		{
-			pid_t pid = fork();
-
-			if (pid == 0)
-			{
-				/* Split the command into tokens for execve */
-				char *envp[] = {NULL};
-				/* Environment variables (empty for this example)*/
-
-				execve(cmd_path, &command, envp);
-				perror("Error: Command execution failed");
-				free(cmd_path);
-				_exit(1);
-			}
-			else if (pid < 0)
-			{
-				perror("Error: Fork failed");
-				exit(1);
-			}
-			else
-			{
-				waitpid(pid, NULL, 0);
-			}
-
+			execve(cmd_path, args, envp);
+			perror("Error: Command execution failed");
 			free(cmd_path);
+			_exit(1);
 		}
 		else
 		{
-			perror("Error: command not found in PATH\n");
+			perror("Error: Command not found in PATH\n");
+			free(cmd_path);
+			_exit(1);
 		}
+	}
+	else if (pid < 0)
+	{
+		perror("Error: Fork failed");
+		exit(1);
+	}
+	else
+	{
+		waitpid(pid, NULL, 0);
 	}
 }
 
