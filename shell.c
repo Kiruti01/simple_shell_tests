@@ -34,40 +34,54 @@ void execute_command(char *command)
 		write(STDOUT_FILENO, exit_msg, sizeof(exit_msg) -1);
 		exit(0);
 	}
-
-	/*find command path*/
-	cmd_path = find_command(token);
-
-	if (cmd_path != NULL)
+	else if (strcmp(token, "env") == 0)
 	{
-		pid_t pid = fork();
-
-		if (pid == 0)
+		/*print current environment*/
+		extern char **environ;
+		int i = 0;
+		while (environ[i] != NULL)
 		{
-			/* Split the command into tokens for execve */
-			char *envp[] = {NULL};
-			/* Environment variables (empty for this example)*/
-
-			execve(cmd_path, &command, envp);
-			perror("Error: Command execution failed");
-			free(cmd_path);
-			_exit(1);
+			write(STDOUT_FILENO, environ[i], strlen(environ[i]));
+			write(STDOUT_FILENO, "\n", 1);
+			i++;
 		}
-		else if (pid < 0)
-		{
-			perror("Error: Fork failed");
-			exit(1);
-		}
-		else
-		{
-			waitpid(pid, NULL, 0);
-		}
-
-		free(cmd_path);
 	}
 	else
 	{
-		perror("Error: command not found in PATH\n");
+		/*find command path*/
+		cmd_path = find_command(token);
+
+		if (cmd_path != NULL)
+		{
+			pid_t pid = fork();
+
+			if (pid == 0)
+			{
+				/* Split the command into tokens for execve */
+				char *envp[] = {NULL};
+				/* Environment variables (empty for this example)*/
+
+				execve(cmd_path, &command, envp);
+				perror("Error: Command execution failed");
+				free(cmd_path);
+				_exit(1);
+			}
+			else if (pid < 0)
+			{
+				perror("Error: Fork failed");
+				exit(1);
+			}
+			else
+			{
+				waitpid(pid, NULL, 0);
+			}
+
+			free(cmd_path);
+		}
+		else
+		{
+			perror("Error: command not found in PATH\n");
+		}
 	}
 }
 

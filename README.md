@@ -4,4 +4,8 @@
 
 ## 2.Handles arguments
 
-## 3.Exits
+## 3. Handles PATH, fork must not be called if command doesnt exist
+
+## 4. Exists
+
+## 5. Prints environment
