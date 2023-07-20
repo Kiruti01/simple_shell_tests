@@ -6,6 +6,13 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
+/**
+ * Execute user commands in child process using execve
+ * prints error message if cmd not found
+ *
+ * @param command the command to be executed
+ */
+
 void execute_command(char *command)
 {
 	pid_t pid = fork();

@@ -7,12 +7,14 @@
 #include "shell.h"
 
 /**
- * Main function for shell.
+ * Main - function for shell.
+ *
  * @return the exit status of the program
  */
 
 int main(void)
 {
+	/* store buffer*/
 	char *buff = NULL;
 	size_t buff_size = 0;
 	ssize_t characters;
