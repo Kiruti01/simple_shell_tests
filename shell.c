@@ -6,8 +6,43 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-/* finds command inputed*/
-char *find_command(char *command);
+#define MAX_ARGS 100 
+
+/* finds command in path*/
+static char *find_command(char *command)
+{
+	char *path = getenv("PATH");
+	if (path == NULL)
+	{
+		write(STDERR_FILENO, "Error: Path variable not found\n", 31);
+		return NULL;
+	}
+
+	char *path_copy = strdup(path);
+	if (path_copy == NULL)
+	{
+		write(STDERR_FILENO, "Error: strdup failed\n", 21);
+		return NULL;
+	}
+
+	char *dir = strtok(path_copy, ":");
+	char *cmd_path = (char *)malloc(strlen(command) + 256);
+
+	while (dir != NULL)
+	{
+		snprintf(cmd_path, strlen(command) + 256, "%s/%s", dir, command);
+		if (access(cmd_path, X_OK) == 0)
+		{
+			free(path_copy);
+			return cmd_path;
+		}
+		dir = strtok(NULL, ":");
+	}
+
+	free(path_copy);
+	free(cmd_path);
+	return NULL;
+}
 
 /**
  * Execute user commands in child process using execve
@@ -23,11 +58,11 @@ void execute_command(char *command)
 	if (pid == 0)
 	{
 		/* Split the command into tokens for execve */
-		char *args[MAX_COMMAND_LENGTH];
+		char *args[MAX_ARGS + 1];
 		int i = 0;
 		char *token = strtok(command, " ");
 
-		while (token != NULL && i < MAX_COMMAND_LENGTH - 1)
+		while (token != NULL && i < MAX_ARGS)
 		{
 			args[i] = token;
 			token = strtok(NULL, " ");
@@ -35,13 +70,11 @@ void execute_command(char *command)
 		}
 		args[i] = NULL;
 
-		char *envp[] = {NULL};/* Environment variables (empty for this example)*/
-
 		char *cmd_path = find_command(args[0]);
 
 		if (cmd_path != NULL)
 		{
-			execve(cmd_path, args, envp);
+			execve(cmd_path, args, NULL);
 			perror("Error: Command execution failed");
 			free(cmd_path);
 			_exit(1);
@@ -78,7 +111,16 @@ void run_shell()
 
 		if (characters == -1)
 		{
-			break;
+			/*check for end of file*/
+			if (feof(stdin))
+			{
+				break;
+			}
+			else
+			{
+				perror("Error: getline fail");
+				exit(1);
+			}
 		}
 
 		if (strlen(buff) > 0 && buff[characters -1] == '\n')
