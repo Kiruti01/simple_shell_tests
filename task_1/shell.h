@@ -1,9 +1,9 @@
 #ifndef SHELL_H
 #define SHELL_H
 
-extern const char prompt[];
+#include <sys/types.h>
 
 void display_prompt(void);
-void execute_command(char *command);
+void execute_command(char *command, char *args[]);
 
 #endif

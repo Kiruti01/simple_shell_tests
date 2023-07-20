@@ -23,30 +23,33 @@ void display_prompt(void)
 /**
  * execute_command - Executes given cmd using execve
  * @command: the cmd to execute
+ * @args: array of argumnts for cmd
  */
 
-void execute_command(char *command)
+void execute_command(char *command, char *args[])
 {
 	pid_t pid = fork();
 
 	if (pid < 0)
 	{
-		perror("Fork failed.");
+		write(STDERR_FILENO, "Fork Failed.\n", 13);
 		return;
 	}
 	else if (pid == 0)
 	{
 		/*Child process*/
-		char *args[] = {command, NULL};
-		char path[] = "/bin/";
-
-		strcat(path, command);  /* Full path to the command*/
-
-		char *envp[] = {NULL}; /* Array of environment variables*/
-
-		execve(path, args, envp);
-		perror("Command execution failed");
-		exit(EXIT_FAILURE);
+		/* check if cmd is '/bin/ls'*/
+		if (strcmp(command, "/bin/ls")  == 0)
+		{
+			execve(command, args, NULL);
+		}
+		else
+		{
+			char error_msg[100];
+			snprintf(error_msg, sizeof(error_msg), "Command not found: %s\n", command);
+			write(STDERR_FILENO, error_msg, strlen(error_msg));
+			_exit(EXIT_FAILURE);
+		}
 	}
 	else
 	{
@@ -86,7 +89,19 @@ int main(void)
 		/* Remove the trailing newline character from the input*/
 		command[strcspn(command, "\n")] = '\0';
 
-		execute_command(command);
+		/*slit into arguments*/
+		char *args[MAX_COMMAND_LENGTH];
+		char *token;
+		int i = 0;
+		token = strtok(command, " ");
+		while (token != NULL)
+		{
+			args[i++] = token;
+			token = strtok(NULL, " ");
+		}
+		args[i] = NULL;
+
+		execute_command(args[0], args);
 	}
 
 	return (0);
