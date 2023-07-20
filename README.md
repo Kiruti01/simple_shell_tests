@@ -1,7 +1,7 @@
-##Simple shell tests
+# Simple shell tests
 
-###1.Unix command displays prompt
+## 1.Unix command displays prompt
 
-###2.Handles arguments
+## 2.Handles arguments
 
-###3.Exits
+## 3.Exits
